@@ -1,0 +1,20 @@
+# Netlify yapilandirmasi — bulut surumu (AI yok, yalnizca kompozisyon).
+#
+# Veritabani : Netlify Database (Postgres). @netlify/database paketi yuklu oldugu
+#              icin ilk deploy'da otomatik olusturulur; baglanti NETLIFY_DB_URL ile
+#              gelir. Sema netlify/database/migrations altindaki SQL ile kurulur.
+# Dosyalar   : Netlify Blobs ("files" deposu).
+#
+# Gerekli ortam degiskenleri (Site configuration > Environment variables):
+#   APP_PASSWORD  - giris sifresi (tanimli degilse site acilmaz)
+#   APP_SECRET    - oturum imzasi ve Shopify bilgilerinin sifrelenmesi icin
+#                   uzun rastgele bir metin (degistirilirse Shopify bilgileri
+#                   yeniden girilmelidir)
+
+[build]
+  command = "npm run build:netlify"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"

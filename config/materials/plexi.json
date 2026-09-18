@@ -1,0 +1,93 @@
+{
+  "id": "plexi",
+  "label": "Plexi",
+  "enabled": true,
+  "workflow": "flux_kontext_mockup.json",
+  "defaultMethod": "auto",
+  "reflective": true,
+  "shopifyTag": "plexi",
+  "vendor": "",
+  "productType": "Pleksiglas Tablo",
+  "productCategory": "Home & Garden > Decor > Artwork",
+  "tags": [
+    "pleksi tablo",
+    "duvar dekoru",
+    "tablo"
+  ],
+  "optionName": "Ölçü",
+  "titleTemplate": "{{design}} Pleksiglas Tablo",
+  "bodyTemplate": "<p>{{title}} — parlak pleksiglas (akrilik) üzerine UV baskı ile üretilen dekoratif tablo.</p>\n<ul>\n  <li>Şeffaf akrilik panel üzerine UV baskı; derinlikli, parlak bir görünüm sağlar.</li>\n  <li>Cilalı kalın kenarlar ışığı kırar ve tabloya çerçevesiz bir hacim kazandırır.</li>\n  <li>Duvara montaj için standoff (mesafeli) tutucular ürünle birlikte gönderilir.</li>\n  <li>Cama göre hafiftir, kırılma riski düşüktür.</li>\n</ul>\n<p>Ölçünüzü seçerek sepete ekleyebilirsiniz. Ürün özel üretim olduğu için kargoya veriliş süresi 2-4 iş günüdür.</p>",
+  "sizes": [
+    {
+      "size": "30cm x 30cm",
+      "price": "799.00",
+      "grams": 0
+    },
+    {
+      "size": "50cm x 70cm",
+      "price": "2499.00",
+      "grams": 0
+    },
+    {
+      "size": "60cm x 60cm",
+      "price": "1999.00",
+      "grams": 0
+    },
+    {
+      "size": "70cm x 100cm",
+      "price": "4499.00",
+      "grams": 0
+    },
+    {
+      "size": "90cm x 90cm",
+      "price": "3999.00",
+      "grams": 0
+    },
+    {
+      "size": "100cm x 150cm",
+      "price": "8999.00",
+      "grams": 0
+    }
+  ],
+  "basePrompt": "Replace the artwork on the acrylic plexiglass panel in the first image with the artwork from the second image. Cover the printed area completely, edge to edge. Match the panel's perspective so the artwork lies flat behind the glossy acrylic. Keep the thick clear edge glow, the polished surface, the panel's shape, the background, the lighting and the cast shadow exactly as they are.",
+  "defaults": {
+    "width": 1024,
+    "height": 1024,
+    "steps": 20,
+    "cfg": 2.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "shift": 3.16,
+    "negativePrompt": ""
+  },
+  "harmonize": {
+    "workflow": "harmonize_flux.json",
+    "denoise": 0.25,
+    "steps": 20,
+    "guidance": 2.5,
+    "prompt": "blend the artwork seamlessly into the product surface, soften the seams, natural lighting and material texture, photorealistic product photo"
+  },
+  "templates": [
+    {
+      "id": "front",
+      "label": "Önden",
+      "file": "front.png",
+      "method": "auto",
+      "prompt": "Keep the straight-on frontal framing."
+    },
+    {
+      "id": "angle",
+      "label": "Açılı",
+      "file": "angle.png",
+      "method": "auto",
+      "prompt": "Keep the three-quarter angle and the thick polished acrylic edge with its light glow."
+    },
+    {
+      "id": "standing",
+      "label": "Ayaklı",
+      "file": "standing.png",
+      "method": "auto",
+      "prompt": "Keep the panel standing on its stand with its soft cast shadow."
+    }
+  ]
+}

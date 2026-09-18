@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Bir board calistirmasi: pin toplamadan CSV/Shopify cikisina kadar toplu akisi tasir.
+model Batch {
+  id        String  @id @default(cuid())
+  boardUrl  String
+  boardId   String? // Pinterest v5 board id (varsa)
+  boardName String  @default("")
+  source    String  @default("api") // api | scrape
+  status    String  @default("collecting") // collecting | generating | review | done
+
+  pins   Pin[]
+  drafts Draft[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Board'dan cekilen tek bir pin. Secilirse gorseli indirilip tasarima donusur.
+model Pin {
+  id      String @id @default(cuid())
+  batchId String
+  batch   Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  pinId    String // pinterest.com/pin/{pinId}
+  pinUrl   String
+  thumbUrl String // grid icin kucuk varyant
+  imageUrl String // images.orig.url
+  note     String  @default("") // pin basligi/aciklamasi (metin on dolgusu icin)
+  selected Boolean @default(false)
+  position Int     @default(0)
+
+  sourcePath String? // storage/sources/...
+  designPath String? // storage/processed/...
+  error      String?
+
+  drafts Draft[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([batchId, pinId])
+  @@index([batchId])
+}
+
+/// Bir urun taslagi: kaynak tasarimdan Shopify'a gonderime kadar tum akisi tasir.
+/// Toplu akista bir Draft = (pin x materyal).
+model Draft {
+  id     String @id @default(cuid())
+  status String @default("draft") // draft | generating | ready | published | failed
+
+  // [0] Toplu uretim baglari (tek tasarim akisinda bos kalir)
+  batchId    String?
+  batch      Batch?  @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  pinId      String?
+  pin        Pin?    @relation(fields: [pinId], references: [id], onDelete: SetNull)
+  /// Bu taslagin urun materyali; varyasyon/fiyat tablosu ve etiketler buradan gelir.
+  materialId String?
+  approved   Boolean @default(false)
+
+  // [1] Kaynak
+  sourceType String? // pinterest | upload
+  sourceUrl  String?
+  sourcePath String? // storage/sources/...
+  designPath String? // storage/processed/... (on islenmis tasarim)
+
+  // [4] Urun bilgileri
+  title       String @default("")
+  handle      String @default("")
+  description String @default("")
+  collection  String @default("")
+  tags        String @default("") // virgulle ayrilmis
+  vendor      String @default("")
+  productType String @default("")
+  optionName  String @default("Ölçü")
+
+  // [5] Yayin sonucu
+  shopifyProductId String?
+  publishedAt      DateTime?
+  error            String?
+
+  variants Variant[]
+  jobs     MockupJob[]
+  assets   Asset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([batchId])
+}
+
+/// Sinirsiz sayida varyasyon; her biri kendi olcusu, SKU'su ve FIYATI ile.
+model Variant {
+  id      String @id @default(cuid())
+  draftId String
+  draft   Draft  @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  size           String // option degeri, orn. "30x40 cm"
+  sku            String
+  price          String // ondalik hassasiyet icin string tutulur, orn. "1499.90"
+  compareAtPrice String?
+  /// Shopify CSV'sindeki Variant Grams sutunu.
+  grams          Int     @default(0)
+  position       Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([draftId])
+}
+
+/// Tek bir mockup uretim isi: (materyal x sablon) kombinasyonu.
+model MockupJob {
+  id      String @id @default(cuid())
+  draftId String
+  draft   Draft  @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  materialId String // config/materials/<id>.json
+  templateId String // o materyaldeki sablon (aci) id'si
+  workflow   String // workflows/<dosya>.json
+
+  prompt String @default("")
+  seed   String @default("0")
+  width  Int    @default(1024)
+  height Int    @default(1024)
+  steps  Int    @default(25)
+  cfg    Float  @default(3.5)
+
+  status   String  @default("queued") // queued | running | done | failed | cancelled
+  progress Int     @default(0) // 0-100
+  promptId String? // ComfyUI prompt_id
+  error    String?
+  /// Is tamamlandi ama bir adim atlandi (orn. harmonizasyon pasi basarisiz).
+  warning  String?
+
+  assets Asset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([draftId, status])
+}
+
+/// Uretilmis bir gorsel dosyasi.
+model Asset {
+  id      String     @id @default(cuid())
+  draftId String
+  draft   Draft      @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  jobId   String?
+  job     MockupJob? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  path      String // storage/mockups/...
+  kind      String  @default("mockup") // mockup | source | design
+  width     Int     @default(0)
+  height    Int     @default(0)
+  selected  Boolean @default(true) // Shopify'a gonderilecek mi
+  position  Int     @default(0)
+  /// CSV'nin Image Src sutunu icin herkese acik adres (Shopify Files CDN).
+  publicUrl String?
+
+  createdAt DateTime @default(now())
+
+  @@index([draftId])
+}
+
+/// Uygulama ayarlari (anahtar -> JSON). Gizli alanlar AES-256-GCM ile sifreli saklanir.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

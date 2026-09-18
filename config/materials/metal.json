@@ -1,0 +1,62 @@
+{
+  "id": "metal",
+  "label": "Metal",
+  "enabled": true,
+  "workflow": "flux_kontext_mockup.json",
+  "defaultMethod": "auto",
+  "reflective": true,
+  "shopifyTag": "metal",
+  "vendor": "",
+  "productType": "Metal Tablo",
+  "productCategory": "Home & Garden > Decor > Artwork",
+  "tags": [
+    "metal tablo",
+    "duvar dekoru",
+    "tablo"
+  ],
+  "optionName": "Ölçü",
+  "titleTemplate": "{{design}} Metal Tablo",
+  "bodyTemplate": "",
+  "sizes": [],
+  "basePrompt": "Replace the artwork on the metal panel in the first image with the artwork from the second image. Cover the printed area completely, edge to edge. Match the panel's perspective so the artwork lies flat, and keep the brushed metal texture and metallic specular reflections visible over the print. Keep the panel's shape, edges, mounting hardware, the background, the lighting and the cast shadow exactly as they are.",
+  "defaults": {
+    "width": 1024,
+    "height": 1024,
+    "steps": 20,
+    "cfg": 2.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "shift": 3.16,
+    "negativePrompt": ""
+  },
+  "harmonize": {
+    "workflow": "harmonize_flux.json",
+    "denoise": 0.25,
+    "steps": 20,
+    "guidance": 2.5,
+    "prompt": "blend the artwork seamlessly into the product surface, soften the seams, natural lighting and material texture, photorealistic product photo"
+  },
+  "templates": [
+    {
+      "id": "front",
+      "label": "Önden",
+      "file": "front.png",
+      "method": "auto",
+      "prompt": "Keep the straight-on frontal framing."
+    },
+    {
+      "id": "angle",
+      "label": "Açılı",
+      "file": "angle.png",
+      "method": "auto",
+      "prompt": "Keep the three-quarter angle and the metallic sheen along the edge."
+    },
+    {
+      "id": "detail",
+      "label": "Yakın Detay",
+      "file": "detail.png",
+      "method": "auto",
+      "prompt": "Keep the close-up framing and the brushed metal grain."
+    }
+  ]
+}

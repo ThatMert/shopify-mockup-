@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "name": "FLUX Harmonizasyon Pasi (img2img, dusuk denoise)",
+    "description": "Kompozisyonla uretilmis mockup'i FLUX'a dusuk denoise ile bir kez daha gecirir. Amac kompozisyonu DEGISTIRMEK degil; yapistirma izini yumusatmak, renk gecislerini dogallastirmak ve malzeme dokusunun tasarimin altindan hafifce gorunmesini saglamak. Geometri, perspektif ve isik zaten kompozisyon asamasinda deterministik olarak kuruldugu icin burada denoise 0.15-0.35 arasinda tutulur; ustune cikildikca model kompozisyonu bozmaya baslar. Sadece cekirdek ComfyUI node'lari kullanilir - custom node gerekmez. FLUX'ta CFG=1 oldugundan negatif prompt etkisizdir; negatif kosul ConditioningZeroOut ile uretilir, guidance ayri olarak FluxGuidance node'una verilir.",
+    "graph": "composite -> VAEEncode -> KSampler(denoise) -> VAEDecode -> SaveImage",
+    "placeholders": {
+      "%%COMPOSITE%%": "ComfyUI input klasorundeki kompozisyon ciktisi (rotustan gececek gorsel)",
+      "%%PROMPT%%": "harmonizasyon talimati (materyalin harmonize.prompt degeri)",
+      "%%GUIDANCE%%": "FluxGuidance degeri (2.0-3.5 onerilir)",
+      "%%SEED%%": "orneklem tohumu",
+      "%%STEPS%%": "adim sayisi",
+      "%%DENOISE%%": "0.15-0.35; ne kadar rotus yapilacagi",
+      "%%SAMPLER%%": "sampler adi",
+      "%%SCHEDULER%%": "scheduler adi",
+      "%%FILENAME_PREFIX%%": "SaveImage dosya adi oneki"
+    }
+  },
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "flux1-dev-kontext_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "2": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "flux",
+      "device": "default"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": { "vae_name": "ae.safetensors" }
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "%%COMPOSITE%%" }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "clip": ["2", 0], "text": "%%PROMPT%%" }
+  },
+  "6": {
+    "class_type": "FluxGuidance",
+    "inputs": { "conditioning": ["5", 0], "guidance": "%%GUIDANCE%%" }
+  },
+  "7": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": { "conditioning": ["5", 0] }
+  },
+  "8": {
+    "class_type": "VAEEncode",
+    "inputs": { "pixels": ["4", 0], "vae": ["3", 0] }
+  },
+  "9": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["1", 0],
+      "seed": "%%SEED%%",
+      "steps": "%%STEPS%%",
+      "cfg": 1.0,
+      "sampler_name": "%%SAMPLER%%",
+      "scheduler": "%%SCHEDULER%%",
+      "positive": ["6", 0],
+      "negative": ["7", 0],
+      "latent_image": ["8", 0],
+      "denoise": "%%DENOISE%%"
+    }
+  },
+  "10": {
+    "class_type": "VAEDecode",
+    "inputs": { "samples": ["9", 0], "vae": ["3", 0] }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["10", 0], "filename_prefix": "%%FILENAME_PREFIX%%" }
+  }
+}

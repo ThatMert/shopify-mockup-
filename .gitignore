@@ -1,0 +1,30 @@
+node_modules/
+.next/
+next-env.d.ts
+.env
+*.tsbuildinfo
+
+# Üretilen ve kullanıcıya ait dosyalar repoya girmez
+storage/sources/
+storage/processed/
+storage/mockups/
+prisma/dev.db
+prisma/dev.db-journal
+dist/
+
+# Ayar sifreleme anahtari (APP_SECRET tanimli degilse yerelde uretilir)
+storage/.app-secret
+
+# Netlify
+.netlify/
+# Bulut Prisma semasi derleme aninda uretilir (scripts/prisma-cloud.mjs)
+prisma/cloud/
+
+# Mockup sablonlari kullanici verisidir; buluta scripts/push-templates.mjs ile aktarilir
+storage/templates/**
+!storage/templates/README.md
+!storage/templates/*/
+!storage/templates/*/.gitkeep
+
+# Yerel arac/oturum dosyalari
+.claude/

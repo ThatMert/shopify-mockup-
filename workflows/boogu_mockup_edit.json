@@ -1,0 +1,128 @@
+{
+  "_meta": {
+    "name": "Boogu Image Edit — Mockup",
+    "description": "Resmi ComfyUI 'Boogu Image Edit' sablonunun API-format duzlestirilmis hali. image_1 = mockup sablonu (urun fotografi), image_2 = uygulanacak tasarim.",
+    "placeholders": {
+      "%%IMAGE_1%%": "ComfyUI input klasorundeki mockup sablon dosya adi",
+      "%%IMAGE_2%%": "ComfyUI input klasorundeki tasarim dosya adi (opsiyonel)",
+      "%%PROMPT%%": "pozitif duzenleme talimati",
+      "%%NEGATIVE_PROMPT%%": "negatif prompt",
+      "%%WIDTH%%": "cikti genisligi",
+      "%%HEIGHT%%": "cikti yuksekligi",
+      "%%SEED%%": "noise seed",
+      "%%STEPS%%": "sampler adim sayisi",
+      "%%CFG%%": "cfg degeri",
+      "%%SAMPLER%%": "sampler adi",
+      "%%SCHEDULER%%": "scheduler adi",
+      "%%SHIFT%%": "ModelSamplingAuraFlow shift",
+      "%%FILENAME_PREFIX%%": "SaveImage dosya on eki"
+    }
+  },
+
+  "1": {
+    "class_type": "UNETLoader",
+    "_meta": { "title": "Boogu diffusion model" },
+    "inputs": {
+      "unet_name": "boogu_image_edit_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+
+  "2": {
+    "class_type": "CLIPLoader",
+    "_meta": { "title": "Qwen3-VL text/vision encoder" },
+    "inputs": {
+      "clip_name": "qwen3vl_8b_fp8_scaled.safetensors",
+      "type": "boogu",
+      "device": "default"
+    }
+  },
+
+  "3": {
+    "class_type": "VAELoader",
+    "_meta": { "title": "VAE" },
+    "inputs": { "vae_name": "ae.safetensors" }
+  },
+
+  "4": {
+    "class_type": "LoadImage",
+    "_meta": { "title": "Mockup sablonu (materyal/aci)" },
+    "inputs": { "image": "%%IMAGE_1%%" }
+  },
+
+  "5": {
+    "class_type": "LoadImage",
+    "_meta": { "title": "Tasarim gorseli" },
+    "inputs": { "image": "%%IMAGE_2%%" }
+  },
+
+  "6": {
+    "class_type": "TextEncodeBooguEdit",
+    "_meta": { "title": "Boogu Edit conditioning" },
+    "inputs": {
+      "clip": ["2", 0],
+      "vae": ["3", 0],
+      "prompt": "%%PROMPT%%",
+      "negative_prompt": "%%NEGATIVE_PROMPT%%",
+      "images.image_1": ["4", 0],
+      "images.image_2": ["5", 0]
+    }
+  },
+
+  "7": {
+    "class_type": "EmptyLatentImage",
+    "_meta": { "title": "Cikti olcusu" },
+    "inputs": { "width": "%%WIDTH%%", "height": "%%HEIGHT%%", "batch_size": 1 }
+  },
+
+  "8": {
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": { "title": "Sigma shift (sadece scheduler icin)" },
+    "inputs": { "model": ["1", 0], "shift": "%%SHIFT%%" }
+  },
+
+  "9": {
+    "class_type": "BasicScheduler",
+    "_meta": { "title": "Sigmas" },
+    "inputs": {
+      "model": ["8", 0],
+      "scheduler": "%%SCHEDULER%%",
+      "steps": "%%STEPS%%",
+      "denoise": 1.0
+    }
+  },
+
+  "10": {
+    "class_type": "KSamplerSelect",
+    "_meta": { "title": "Sampler" },
+    "inputs": { "sampler_name": "%%SAMPLER%%" }
+  },
+
+  "11": {
+    "class_type": "SamplerCustom",
+    "_meta": { "title": "Sampling" },
+    "inputs": {
+      "model": ["1", 0],
+      "add_noise": true,
+      "noise_seed": "%%SEED%%",
+      "cfg": "%%CFG%%",
+      "positive": ["6", 0],
+      "negative": ["6", 1],
+      "sampler": ["10", 0],
+      "sigmas": ["9", 0],
+      "latent_image": ["7", 0]
+    }
+  },
+
+  "12": {
+    "class_type": "VAEDecode",
+    "_meta": { "title": "Decode" },
+    "inputs": { "samples": ["11", 0], "vae": ["3", 0] }
+  },
+
+  "13": {
+    "class_type": "SaveImage",
+    "_meta": { "title": "Kaydet" },
+    "inputs": { "images": ["12", 0], "filename_prefix": "%%FILENAME_PREFIX%%" }
+  }
+}

@@ -1,0 +1,273 @@
+{
+  "_meta": {
+    "name": "Flux.1 Kontext dev — Mockup",
+    "description": "ComfyUI'nin resmi 'Image Edit (Flux.1 Kontext Dev)' sablonundan turetilmis API-format workflow. Resmi sablondan iki farki var: (1) iki referans ImageStitch ile yan yana birlestirilmek yerine ayri ayri VAE'den gecirilip ReferenceLatent zinciriyle kosullandirilir, boylece cikti sablonun olcusunde kalir; (2) FluxKontextImageScale yerine ImageScale (crop=disabled) kullanilir, cunku o node gorseli desteklenen cozunurluge ORTADAN KIRPARAK oturtuyor. Olculer sunucu tarafinda hesaplanip placeholder olarak verilir.",
+    "graph": "template -> KontextScale -> VAEEncode -> hem latent_image (cikti olcusu) hem 1. referans | design -> KontextScale -> VAEEncode -> 2. referans",
+    "placeholders": {
+      "%%IMAGE_1%%": "ComfyUI input klasorundeki mockup sablonu (bos urun fotografi)",
+      "%%IMAGE_2%%": "ComfyUI input klasorundeki tasarim dosyasi",
+      "%%TEMPLATE_W%%": "sablonun olceklenecegi genislik (en yakin Kontext cozunurlugu)",
+      "%%TEMPLATE_H%%": "sablonun olceklenecegi yukseklik",
+      "%%DESIGN_W%%": "tasarimin olceklenecegi genislik (oran korunur, 16'nin kati)",
+      "%%DESIGN_H%%": "tasarimin olceklenecegi yukseklik",
+      "%%PROMPT%%": "duzenleme talimati",
+      "%%SEED%%": "noise seed",
+      "%%STEPS%%": "sampler adim sayisi (Kontext icin 20 yeterli)",
+      "%%GUIDANCE%%": "FluxGuidance degeri (2.0-3.5 arasi onerilir)",
+      "%%SAMPLER%%": "sampler adi",
+      "%%SCHEDULER%%": "scheduler adi",
+      "%%FILENAME_PREFIX%%": "SaveImage dosya on eki"
+    },
+    "models": {
+      "diffusion_models": "flux1-dev-kontext_fp8_scaled.safetensors",
+      "text_encoders": [
+        "clip_l.safetensors",
+        "t5xxl_fp8_e4m3fn_scaled.safetensors"
+      ],
+      "vae": "ae.safetensors"
+    },
+    "notes": "Kontext cozunurluk listesi sabit oldugu icin sablonun orani birebir tutmayabilir; olusan kucuk sapma uretim bittikten sonra ciktinin sablonun orijinal olculerine geri olceklenmesiyle geri alinir (bkz. lib/comfy/runner.ts)."
+  },
+  "1": {
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Flux Kontext dev (fp8)"
+    },
+    "inputs": {
+      "unet_name": "flux1-dev-kontext_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "2": {
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "CLIP-L + T5-XXL"
+    },
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "flux",
+      "device": "default"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "VAE"
+    },
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    }
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Mockup sablonu"
+    },
+    "inputs": {
+      "image": "%%IMAGE_1%%"
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Tasarim gorseli"
+    },
+    "inputs": {
+      "image": "%%IMAGE_2%%"
+    }
+  },
+  "6": {
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "Sablonu Kontext cozunurlugune getir (kirpmadan)"
+    },
+    "inputs": {
+      "image": [
+        "4",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": "%%TEMPLATE_W%%",
+      "height": "%%TEMPLATE_H%%",
+      "crop": "disabled"
+    }
+  },
+  "7": {
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "Tasarimi olcekle (kirpmadan)"
+    },
+    "inputs": {
+      "image": [
+        "5",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": "%%DESIGN_W%%",
+      "height": "%%DESIGN_H%%",
+      "crop": "disabled"
+    }
+  },
+  "8": {
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "Sablon latenti (cikti olcusunu belirler)"
+    },
+    "inputs": {
+      "pixels": [
+        "6",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    }
+  },
+  "9": {
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "Tasarim latenti"
+    },
+    "inputs": {
+      "pixels": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    }
+  },
+  "10": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Duzenleme talimati"
+    },
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "text": "%%PROMPT%%"
+    }
+  },
+  "11": {
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "1. referans: sablon"
+    },
+    "inputs": {
+      "conditioning": [
+        "10",
+        0
+      ],
+      "latent": [
+        "8",
+        0
+      ]
+    }
+  },
+  "12": {
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "2. referans: tasarim"
+    },
+    "inputs": {
+      "conditioning": [
+        "11",
+        0
+      ],
+      "latent": [
+        "9",
+        0
+      ]
+    }
+  },
+  "13": {
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "Guidance"
+    },
+    "inputs": {
+      "conditioning": [
+        "12",
+        0
+      ],
+      "guidance": "%%GUIDANCE%%"
+    }
+  },
+  "14": {
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "Negatif (Flux'ta bos)"
+    },
+    "inputs": {
+      "conditioning": [
+        "10",
+        0
+      ]
+    }
+  },
+  "15": {
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "Sampling"
+    },
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "seed": "%%SEED%%",
+      "steps": "%%STEPS%%",
+      "cfg": 1.0,
+      "sampler_name": "%%SAMPLER%%",
+      "scheduler": "%%SCHEDULER%%",
+      "positive": [
+        "13",
+        0
+      ],
+      "negative": [
+        "14",
+        0
+      ],
+      "latent_image": [
+        "8",
+        0
+      ],
+      "denoise": 1.0
+    }
+  },
+  "16": {
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    },
+    "inputs": {
+      "samples": [
+        "15",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    }
+  },
+  "17": {
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Kaydet"
+    },
+    "inputs": {
+      "images": [
+        "16",
+        0
+      ],
+      "filename_prefix": "%%FILENAME_PREFIX%%"
+    }
+  }
+}

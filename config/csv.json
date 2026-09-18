@@ -1,0 +1,14 @@
+{
+  "_comment": "Shopify urun ice aktarma CSV'sinde sabit kalan sutun degerleri. Magazanizin mevcut export'una gore duzenleyin.",
+  "published": "true",
+  "status": "active",
+  "giftCard": "false",
+  "inventoryTracker": "shopify",
+  "inventoryQty": 100,
+  "inventoryPolicy": "continue",
+  "fulfillmentService": "manual",
+  "requiresShipping": "true",
+  "taxable": "true",
+  "weightUnit": "kg",
+  "defaultVendor": ""
+}
