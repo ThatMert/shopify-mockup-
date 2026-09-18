@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
 /**
@@ -15,7 +16,12 @@ import { useEffect } from 'react';
  * olarak kapar, ayni is iki kez calismaz.
  */
 export function QueuePump() {
+  const pathname = usePathname();
+  const onLogin = pathname === '/login';
+
   useEffect(() => {
+    // Oturum yokken tick 401 doner; giris sayfasinda pompa hic calismaz.
+    if (onLogin) return;
     let stopped = false;
     let running = false;
     let localMode = false;
@@ -32,6 +38,8 @@ export function QueuePump() {
           let json: { mode?: string; remaining?: number; error?: string };
           try {
             const res = await fetch('/api/queue/tick', { method: 'POST' });
+            // Oturum dusmusse tekrar denemenin anlami yok; sessizce dur.
+            if (res.status === 401) break;
             json = await res.json();
             if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
             failures = 0;
@@ -66,7 +74,7 @@ export function QueuePump() {
       stopped = true;
       window.removeEventListener('queue:kick', kick);
     };
-  }, []);
+  }, [onLogin]);
 
   return null;
 }

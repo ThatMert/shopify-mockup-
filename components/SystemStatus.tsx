@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface Health {
@@ -13,17 +14,24 @@ interface Health {
 
 /** Uc durumun tek satirda ozeti; ust cubukta canli gosterilir. */
 export function SystemStatus() {
+  const pathname = usePathname();
   const [health, setHealth] = useState<Health | null>(null);
   const [loading, setLoading] = useState(true);
+  // Giris sayfasinda (oturum yokken) API'ler 401 doner; hic sorgulanmaz.
+  const onLogin = pathname === '/login';
 
   useEffect(() => {
+    if (onLogin) return;
     let alive = true;
 
     const load = async () => {
       try {
         const res = await fetch('/api/health');
+        // 401/5xx yanitlari saglik verisi degildir; eskiden bu yanit Health
+        // gibi okunup health.queue.running'e erisilince sayfa cokuyordu.
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as Health;
-        if (alive) setHealth(json);
+        if (alive) setHealth(json?.queue ? json : null);
       } catch {
         if (alive) setHealth(null);
       } finally {
@@ -38,7 +46,9 @@ export function SystemStatus() {
       alive = false;
       clearInterval(timer);
     };
-  }, []);
+  }, [onLogin]);
+
+  if (onLogin) return null;
 
   if (loading) {
     return <span className="text-xs text-neutral-600">durum kontrol ediliyor…</span>;
