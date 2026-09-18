@@ -28,8 +28,22 @@ const nextConfig = {
   // Uretilen gorseller ve paket ciktisi izlemeye girmemeli; aksi halde
   // storage/ altindaki yuzlerce MB standalone ciktisina kopyalaniyor.
   // Calisma zamaninda gereken sablonlari paketleme betigi kendisi kopyalar.
+  //
+  // DIKKAT: Next bu desenleri picomatch `contains: true` ile esliyor; yani
+  // desen yolun HERHANGI bir yerinde gecerse dosya dislanir. Eskiden burada
+  // olan 'dist/**', node_modules/next/dist/... altindaki cpu-profile.js gibi
+  // calisma zamani dosyalarini da atiyor ve sunucu acilista cokuyordu.
+  // Desenler bu yuzden yalnizca kastedilen klasorlere uyacak kadar ozgul.
   outputFileTracingExcludes: {
-    '*': ['storage/**', 'dist/**', '.next/cache/**', 'prisma/dev.db'],
+    '*': [
+      'storage/templates/**',
+      'storage/mockups/**',
+      'storage/sources/**',
+      'storage/processed/**',
+      'dist/MockupShopify/**',
+      '.next/cache/**',
+      'prisma/dev.db',
+    ],
   },
 
   // Prisma'nin sorgu motoru dinamik yuklendigi icin izleyici bazen atliyor;
